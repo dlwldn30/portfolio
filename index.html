@@ -7,10 +7,34 @@
 <meta name="description" content="이지우의 백엔드 개발 포트폴리오">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#edf1f5;color:#18212f;font-family:system-ui,-apple-system,sans-serif}header{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;background:#fff;border-bottom:1px solid #dce2ea}h1{font-size:18px;margin:0}p{font-size:12px;color:#5b6574;margin:5px 0 0}nav{display:flex;gap:8px;flex-shrink:0}a{display:inline-block;text-decoration:none;color:#24364c;background:#eef2f6;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600}a.primary{background:#203a58;color:white}iframe{display:block;width:100%;height:calc(100dvh - 77px);border:0;background:#edf1f5}@media(max-width:600px){header{padding:14px 16px;flex-wrap:wrap}nav{width:100%}iframe{height:calc(100dvh - 126px)}}
-</style>
+main{max-width:960px;margin:24px auto;padding:0 12px}canvas{display:block;width:100%;height:auto;background:white;box-shadow:0 2px 12px #18212f15;margin-bottom:24px}#status{text-align:center;padding:12px}header{position:sticky;top:0;z-index:1}</style>
 </head>
 <body>
 <header><div><h1>이지우 · 백엔드 개발 포트폴리오</h1><p>PDF · 8페이지</p></div><nav aria-label="포트폴리오 파일"><a class="primary" href="portfolio.pdf" target="_blank" rel="noopener">PDF 직접 열기</a><a href="portfolio.pdf" download="이지우_포트폴리오.pdf">다운로드</a></nav></header>
-<iframe src="portfolio.pdf#view=FitH" title="이지우 백엔드 개발 포트폴리오 PDF"></iframe>
+<main id="pages" aria-label="포트폴리오 PDF 8페이지"><p id="status" role="status">포트폴리오를 불러오는 중입니다…</p></main>
+<script type="module">
+import * as pdfjs from './pdf.mjs';
+pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
+const pages = document.getElementById('pages');
+const status = document.getElementById('status');
+try {
+  const pdf = await pdfjs.getDocument('./portfolio.pdf').promise;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({scale: 2});
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `포트폴리오 ${i}페이지. 원본 PDF는 상단 직접 열기 버튼으로 확인하세요.`);
+    pages.appendChild(canvas);
+    await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+    if (i === 1) status.hidden = true;
+  }
+} catch (error) {
+  status.hidden = false;
+  status.textContent = '상단의 PDF 직접 열기 버튼으로 포트폴리오를 확인해주세요.';
+}
+</script>
 </body>
 </html>
